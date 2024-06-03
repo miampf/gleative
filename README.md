@@ -2,6 +2,7 @@
 
 [![Package Version](https://img.shields.io/hexpm/v/gleative)](https://hex.pm/packages/gleanative)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/gleative/)
+
 Easily compile your gleam projects to native executables using [deno](https://deno.com/).
 
 ## Installation and usage
