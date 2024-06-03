@@ -1,5 +1,6 @@
 import gleam/result
 import gleam/io
+import gleam/iterator
 
 import shellout
 import simplifile.{write, read}
@@ -14,6 +15,7 @@ pub fn main() {
     False -> io.debug("Executed gleam")
   }
 
+  // parse the projects gleam.toml file
   let assert Ok(project_toml) = read(from: "./gleam.toml")
   let assert Ok(parsed) = parse(project_toml)
   let assert Ok(name) = tom.get_string(parsed, ["name"])
@@ -44,11 +46,23 @@ pub fn main() {
     False -> io.debug("Wrote file")
   }
 
-  // compile to native with deno
-  let res = shellout.command(run: "deno", in: "./build/dev/javascript", with: ["compile", "./compile.js", "--no-check", "-A", "--config", "./deno.json"], opt: [])
-  
-  case result.is_error(res) {
-    True -> io.debug("Failed to execute deno")
-    False -> io.debug("Executed deno")
-  }
+  // parse the gleative.toml file
+  let assert Ok(gleative_toml) = read(from: "./gleative.toml")
+  let assert Ok(parsed) = parse(gleative_toml)
+  let assert Ok(targets) = tom.get_array(parsed, ["targets"])
+
+  // compile to native executable with deno
+  iterator.from_list(targets)
+  |> iterator.map(fn(target_toml) {
+    let target = case target_toml {
+      tom.String(target) -> target
+      _ -> io.debug("Not a string")
+    }
+    let res = shellout.command(run: "deno", in: "./build/dev/javascript", with: ["compile", "--no-check", "-A", "--config", "./deno.json", "--target", target, "--output", "../../gleative_out/" <> target <> "/out", "./compile.js"], opt: [])
+    case result.is_error(res) {
+      True -> io.debug("Failed to execute deno for target " <> target)
+      False -> io.debug("Executed deno for " <> target)
+    }
+  })
+  |> iterator.to_list
 }
