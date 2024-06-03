@@ -1,4 +1,4 @@
-# gleanative
+# gleative
 
 [![Package Version](https://img.shields.io/hexpm/v/gleanative)](https://hex.pm/packages/gleanative)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/gleanative/)
