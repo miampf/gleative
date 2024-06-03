@@ -5,9 +5,16 @@ import gleam/iterator
 import shellout
 import simplifile.{write, read}
 import tom.{parse}
+import spinner
+import gleam_community/ansi
 
 pub fn main() {
+  let spinner = spinner.new("Gleative compile")
+                |> spinner.with_colour(ansi.blue)
+                |> spinner.start
+
   // build the js build
+  spinner.set_text(spinner, "Compiling gleam project to javascript...")
   let res = shellout.command(run: "gleam", in: ".", with: ["build", "--target", "javascript"], opt: [])
 
   case result.is_error(res) {
@@ -58,6 +65,7 @@ pub fn main() {
       tom.String(target) -> target
       _ -> io.debug("Not a string")
     }
+    spinner.set_text(spinner, "Compiling target " <> target <> " with deno...")    
     let res = shellout.command(run: "deno", in: "./build/dev/javascript", with: ["compile", "--no-check", "-A", "--config", "./deno.json", "--target", target, "--output", "../../gleative_out/" <> target <> "/out", "./compile.js"], opt: [])
     case result.is_error(res) {
       True -> io.debug("Failed to execute deno for target " <> target)
@@ -65,4 +73,9 @@ pub fn main() {
     }
   })
   |> iterator.to_list // execute the iterator
+
+  spinner.stop(spinner)
+  "Finished compilation! You can find your native executables in ./build/gleative_out"
+  |> ansi.green
+  |> io.println
 }
