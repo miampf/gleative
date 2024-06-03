@@ -37,6 +37,23 @@ gleam run -m gleative
 This should be executed in your projects root directory. All compiled targets can be found in
 `./build/gleative_out`.
 
+### Using nix
+
+If you want to make your builds more reproducible, `gleative` provides a flake template for
+[nix](https://nixos.org/). To initialize it, simply run
+
+```sh
+nix flake init -t github:miampf/gleative
+```
+
+This will create a new `flake.nix` as well as a `gleative.toml` file. Now, you can run
+
+```sh
+nix run ".#build"
+```
+
+to build your project.
+
 ## How it works
 
 `gleative` works relatively simple. First, it builds your gleam project for javascript and generates
