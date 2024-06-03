@@ -1,25 +1,44 @@
 # gleative
 
-[![Package Version](https://img.shields.io/hexpm/v/gleanative)](https://hex.pm/packages/gleanative)
-[![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/gleanative/)
+[![Package Version](https://img.shields.io/hexpm/v/gleative)](https://hex.pm/packages/gleanative)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/gleative/)
+
+Easily compile your gleam projects to native executables using [deno](https://deno.com/).
+
+## Installation and usage
+
+First of all, install [deno](https://docs.deno.com/runtime/manual/#install-deno).
+
+Afterwards add `gleative` to your gleam project by running
 
 ```sh
-gleam add gleanative
-```
-```gleam
-import gleanative
-
-pub fn main() {
-  // TODO: An example of the project in use
-}
+gleam add gleative
 ```
 
-Further documentation can be found at <https://hexdocs.pm/gleanative>.
+Now you have to create a file called `gleative.toml` in your projects root directory.
+Currently, this file is only used to define your compilation targets. Add the following to your
+`gleative.toml`.
 
-## Development
+```toml
+targets = [
+  "x86_64-unknown-linux-gnu"
+]
+```
+
+This adds linux to your compilation targets. `gleative` should support all targets
+[deno supports](https://docs.deno.com/runtime/manual/tools/compiler#cross-compilation).
+
+Now, you can simply run:
 
 ```sh
-gleam run   # Run the project
-gleam test  # Run the tests
-gleam shell # Run an Erlang shell
+gleam run -m gleative
 ```
+
+This should be executed in your projects root directory. All compiled targets can be found in
+`./build/gleative_out`.
+
+## How it works
+
+`gleative` works relatively simple. First, it builds your gleam project for javascript and generates
+some light glue code. After that, it compiles the generated javascript code using 
+[deno as a compiler](https://docs.deno.com/runtime/manual/tools/compiler).
