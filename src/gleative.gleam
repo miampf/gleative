@@ -2,7 +2,8 @@ import gleam/result
 import gleam/io
 
 import shellout
-import simplifile.{write}
+import simplifile.{write, read}
+import tom.{parse}
 
 pub fn main() {
   // build the js build
@@ -13,8 +14,12 @@ pub fn main() {
     False -> io.debug("Executed gleam")
   }
 
+  let assert Ok(project_toml) = read(from: "./gleam.toml")
+  let assert Ok(parsed) = parse(project_toml)
+  let assert Ok(name) = tom.get_string(parsed, ["name"])
+
   // write the compile.js file
-  let compile_content = "import {main} from \"./gleanative/gleanative.mjs\";main();"
+  let compile_content = "import {main} from \"./" <> name <> "/" <> name <> ".mjs\";main();"
   let res = compile_content
             |> write(to: "./build/dev/javascript/compile.js")
   case result.is_error(res) {
@@ -22,6 +27,7 @@ pub fn main() {
     False -> io.debug("Wrote file")
   }
 
+  // write the deno configuration (disables some checks)
   let deno_config = "
 {
   \"compilerOptions\": {
