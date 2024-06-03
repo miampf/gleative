@@ -9,19 +9,33 @@ import spinner
 import gleam_community/ansi
 
 pub fn main() {
-  let spinner = spinner.new("Gleative compile")
-                |> spinner.with_colour(ansi.blue)
-                |> spinner.start
+  let spinner =
+    spinner.new("Gleative compile")
+    |> spinner.with_colour(ansi.blue)
+    |> spinner.start
 
-  // build the js build
   spinner.set_text(spinner, "Compiling gleam project to javascript...")
+
+  build_js()
+  write_config()
+  compile_native(spinner)
+
+  spinner.stop(spinner)
+  "Finished compilation! You can find your native executables in ./build/gleative_out"
+  |> ansi.green
+  |> io.println
+}
+
+fn build_js() {
   let res = shellout.command(run: "gleam", in: ".", with: ["build", "--target", "javascript"], opt: [])
 
   case result.is_error(res) {
     True -> io.println("Failed to execute gleam")
     False -> Nil
   }
+}
 
+fn write_config() {
   // parse the projects gleam.toml file
   let assert Ok(project_toml) = read(from: "./gleam.toml")
   let assert Ok(parsed) = parse(project_toml)
@@ -30,7 +44,7 @@ pub fn main() {
   // write the compile.js file
   let compile_content = "import {main} from \"./" <> name <> "/" <> name <> ".mjs\";main();"
   let res = compile_content
-            |> write(to: "./build/dev/javascript/compile.js")
+    |> write(to: "./build/dev/javascript/compile.js")
   case result.is_error(res) {
     True -> io.println("Failed to write file")
     False -> Nil
@@ -38,21 +52,23 @@ pub fn main() {
 
   // write the deno configuration (disables some checks)
   let deno_config = "
-{
-  \"compilerOptions\": {
+    {
+    \"compilerOptions\": {
     \"noImplicitAny\": false,
     \"strict\": false
-  }
-}
+    }
+    }
     "
 
   let res = deno_config
-            |> write(to: "./build/dev/javascript/deno.json")
+    |> write(to: "./build/dev/javascript/deno.json")
   case result.is_error(res) {
     True -> io.println("Failed to write file")
     False -> Nil
   }
+}
 
+fn compile_native(spinner) {
   // parse the gleative.toml file
   let assert Ok(gleative_toml) = read(from: "./gleative.toml")
   let assert Ok(parsed) = parse(gleative_toml)
@@ -76,9 +92,4 @@ pub fn main() {
     }
   })
   |> iterator.to_list // execute the iterator
-
-  spinner.stop(spinner)
-  "Finished compilation! You can find your native executables in ./build/gleative_out"
-  |> ansi.green
-  |> io.println
 }
