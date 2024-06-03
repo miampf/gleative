@@ -51,14 +51,7 @@ fn write_config() {
   }
 
   // write the deno configuration (disables some checks)
-  let deno_config = "
-    {
-    \"compilerOptions\": {
-    \"noImplicitAny\": false,
-    \"strict\": false
-    }
-    }
-    "
+  let deno_config = "{\"compilerOptions\":{\"noImplicitAny\":false,\"strict\":false}}"
 
   let res = deno_config
     |> write(to: "./build/dev/javascript/deno.json")
