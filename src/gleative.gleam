@@ -18,8 +18,8 @@ pub fn main() {
   let res = shellout.command(run: "gleam", in: ".", with: ["build", "--target", "javascript"], opt: [])
 
   case result.is_error(res) {
-    True -> io.debug("Failed to execute gleam")
-    False -> io.debug("Executed gleam")
+    True -> io.println("Failed to execute gleam")
+    False -> Nil
   }
 
   // parse the projects gleam.toml file
@@ -32,8 +32,8 @@ pub fn main() {
   let res = compile_content
             |> write(to: "./build/dev/javascript/compile.js")
   case result.is_error(res) {
-    True -> io.debug("Failed to write file")
-    False -> io.debug("Wrote file")
+    True -> io.println("Failed to write file")
+    False -> Nil
   }
 
   // write the deno configuration (disables some checks)
@@ -49,8 +49,8 @@ pub fn main() {
   let res = deno_config
             |> write(to: "./build/dev/javascript/deno.json")
   case result.is_error(res) {
-    True -> io.debug("Failed to write file")
-    False -> io.debug("Wrote file")
+    True -> io.println("Failed to write file")
+    False -> Nil
   }
 
   // parse the gleative.toml file
@@ -63,13 +63,16 @@ pub fn main() {
   |> iterator.map(fn(target_toml) {
     let target = case target_toml {
       tom.String(target) -> target
-      _ -> io.debug("Not a string")
+      _ -> {
+        io.println("Not a string")
+        ""
+      }
     }
     spinner.set_text(spinner, "Compiling target " <> target <> " with deno...")    
     let res = shellout.command(run: "deno", in: "./build/dev/javascript", with: ["compile", "--no-check", "-A", "--config", "./deno.json", "--target", target, "--output", "../../gleative_out/" <> target <> "/out", "./compile.js"], opt: [])
     case result.is_error(res) {
-      True -> io.debug("Failed to execute deno for target " <> target)
-      False -> io.debug("Executed deno for " <> target)
+      True -> io.println("Failed to execute deno for target " <> target)
+      False -> Nil
     }
   })
   |> iterator.to_list // execute the iterator
