@@ -64,5 +64,5 @@ pub fn main() {
       False -> io.debug("Executed deno for " <> target)
     }
   })
-  |> iterator.to_list
+  |> iterator.to_list // execute the iterator
 }
