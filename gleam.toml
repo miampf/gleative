@@ -1,5 +1,5 @@
 name = "gleative"
-version = "1.0.0"
+version = "0.1.0"
 licenses = ["GPL-3.0"]
 description = " Compile your gleam projects into a native executable using deno."
 
