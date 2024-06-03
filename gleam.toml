@@ -1,5 +1,7 @@
 name = "gleative"
 version = "1.0.0"
+licenses = ["GPL-3.0"]
+description = " Compile your gleam projects into a native executable using deno."
 
 # Fill out these fields if you intend to generate HTML documentation or publish
 # your project to the Hex package manager.
