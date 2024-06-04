@@ -19,10 +19,15 @@ pub fn main() {
 
   let _ =
     build_js()
+    |> snag.context("Failed to build javascript")
     |> result.map_error(snag.pretty_print)
-  write_config()
+  let _ =
+    write_config()
+    |> snag.context("Failed to write necessary configuration and glue code")
+    |> result.map_error(snag.pretty_print)
   let _ =
     compile_native(spinner)
+    |> snag.context("Failed to compile javascript to a native executable")
     |> result.map_error(snag.pretty_print)
 
   spinner.stop(spinner)
@@ -45,38 +50,53 @@ fn build_js() -> Result(Nil) {
       "Gleam failed with exit code " <> int.to_string(status) <> ": " <> message,
     )
   })
-  |> result.map(fn(_) { Nil })
   // we don't care about the command output
+  |> result.map(fn(_) { Nil })
 }
 
 fn write_config() {
   // parse the projects gleam.toml file
-  let assert Ok(project_toml) = read(from: "./gleam.toml")
-  let assert Ok(parsed) = parse(project_toml)
-  let assert Ok(name) = tom.get_string(parsed, ["name"])
+  use name <- result.try(get_project_name())
+  use _ <- result.try(write_compile_js(name))
+  write_deno_config()
+}
 
-  // write the compile.js file
-  let compile_content =
-    "import {main} from \"./" <> name <> "/" <> name <> ".mjs\";main();"
-  let res =
-    compile_content
-    |> write(to: "./build/dev/javascript/compile.js")
-  case result.is_error(res) {
-    True -> io.println("Failed to write file")
-    False -> Nil
-  }
+fn get_project_name() -> Result(String) {
+  read(from: "./gleam.toml")
+  |> result.replace_error(snag.new("Failed to read \"gleam.toml\""))
+  |> result.map(fn(content) {
+    content
+    |> parse
+    |> result.replace_error(snag.new("Failed to parse \"gleam.toml\""))
+  })
+  |> result.flatten
+  |> result.map(fn(parsed) {
+    tom.get_string(parsed, ["name"])
+    |> result.replace_error(snag.new("Failed to get name from \"gleam.toml\""))
+  })
+  |> result.flatten
+}
 
-  // write the deno configuration (disables some checks)
+fn write_deno_config() {
   let deno_config =
     "{\"compilerOptions\":{\"noImplicitAny\":false,\"strict\":false}}"
 
-  let res =
-    deno_config
-    |> write(to: "./build/dev/javascript/deno.json")
-  case result.is_error(res) {
-    True -> io.println("Failed to write file")
-    False -> Nil
-  }
+  deno_config
+  |> write(to: "./build/dev/javascript/deno.json")
+  |> result.replace_error(snag.new(
+    "Failed to write \"./build/dev/javascript/deno.json\"",
+  ))
+}
+
+fn write_compile_js(name) {
+  // write the compile.js file
+  let compile_content =
+    "import {main} from \"./" <> name <> "/" <> name <> ".mjs\";main();"
+  compile_content
+  |> write(to: "./build/dev/javascript/compile.js")
+  |> result.replace_error(snag.new(
+    "Failed to write \"./build/dev/javascript/compile.js\"",
+  ))
 }
 
 fn compile_native(spinner) -> Result(Nil) {
