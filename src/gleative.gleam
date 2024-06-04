@@ -17,7 +17,9 @@ pub fn main() {
 
   spinner.set_text(spinner, "Compiling gleam project to javascript...")
 
-  build_js()
+  let _ =
+    build_js()
+    |> result.map_error(snag.pretty_print)
   write_config()
   let _ =
     compile_native(spinner)
@@ -29,19 +31,22 @@ pub fn main() {
   |> io.println
 }
 
-fn build_js() {
-  let res =
-    shellout.command(
-      run: "gleam",
-      in: ".",
-      with: ["build", "--target", "javascript"],
-      opt: [],
-    )
+fn build_js() -> Result(Nil) {
+  shellout.command(
+    run: "gleam",
+    in: ".",
+    with: ["build", "--target", "javascript"],
+    opt: [],
+  )
+  |> result.map_error(fn(detail) {
+    let #(status, message) = detail
 
-  case result.is_error(res) {
-    True -> io.println("Failed to execute gleam")
-    False -> Nil
-  }
+    snag.new(
+      "Gleam failed with exit code " <> int.to_string(status) <> ": " <> message,
+    )
+  })
+  |> result.map(fn(_) { Nil })
+  // we don't care about the command output
 }
 
 fn write_config() {
@@ -105,43 +110,6 @@ fn get_targets() -> Result(List(tom.Toml)) {
 }
 
 fn compile_targets(spinner, targets) {
-  // compile to native executable with deno
-  // iterator.from_list(targets)
-  // |> iterator.map(fn(target_toml) {
-  //   let target = case target_toml {
-  //     tom.String(target) -> target
-  //     _ -> {
-  //       io.println("Not a string")
-  //       ""
-  //     }
-  //   }
-  //   spinner.set_text(spinner, "Compiling target " <> target <> " with deno...")
-  //   let res =
-  //     shellout.command(
-  //       run: "deno",
-  //       in: "./build/dev/javascript",
-  //       with: [
-  //         "compile",
-  //         "--no-check",
-  //         "-A",
-  //         "--config",
-  //         "./deno.json",
-  //         "--target",
-  //         target,
-  //         "--output",
-  //         "../../gleative_out/" <> target <> "/out",
-  //         "./compile.js",
-  //       ],
-  //       opt: [],
-  //     )
-  //   case result.is_error(res) {
-  //     True -> io.println("Failed to execute deno for target " <> target)
-  //     False -> Nil
-  //   }
-  // })
-  // |> iterator.to_list
-  // execute the iterator
-
   case targets {
     [first, ..rest] -> {
       let target =
