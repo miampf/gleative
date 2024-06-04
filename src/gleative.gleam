@@ -20,15 +20,33 @@ pub fn main() {
   let _ =
     build_js()
     |> snag.context("Failed to build javascript")
-    |> result.map_error(snag.pretty_print)
+    |> result.map_error(fn(e) {
+      io.println("")
+      e
+      |> snag.pretty_print
+      |> ansi.red
+      |> io.println_error
+    })
   let _ =
     write_config()
     |> snag.context("Failed to write necessary configuration and glue code")
-    |> result.map_error(snag.pretty_print)
+    |> result.map_error(fn(e) {
+      io.println("")
+      e
+      |> snag.pretty_print
+      |> ansi.red
+      |> io.println_error
+    })
   let _ =
     compile_native(spinner)
     |> snag.context("Failed to compile javascript to a native executable")
-    |> result.map_error(snag.pretty_print)
+    |> result.map_error(fn(e) {
+      io.println("")
+      e
+      |> snag.pretty_print
+      |> ansi.red
+      |> io.println_error
+    })
 
   spinner.stop(spinner)
   "Finished compilation! You can find your native executables in ./build/gleative_out"
@@ -135,7 +153,13 @@ fn compile_targets(spinner, targets) {
       let target =
         get_target_string(first)
         |> snag.context("Target is not a string, continuing with next target")
-        |> result.map_error(snag.pretty_print)
+        |> result.map_error(fn(e) {
+          io.println("")
+          e
+          |> snag.pretty_print
+          |> ansi.red
+          |> io.println_error
+        })
 
       case result.is_error(target) {
         // if it's not a string, just do the next target
@@ -149,7 +173,13 @@ fn compile_targets(spinner, targets) {
               "Failed to compile target " <> target <> " with deno",
             )
             // we want to continue compilation so we just print
-            |> result.map_error(snag.pretty_print)
+            |> result.map_error(fn(e) {
+              io.println("")
+              e
+              |> snag.pretty_print
+              |> ansi.red
+              |> io.println_error
+            })
           compile_targets(spinner, rest)
         }
       }
