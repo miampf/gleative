@@ -54,6 +54,7 @@ pub fn main() {
   |> io.println
 }
 
+/// `build_js` builds the gleam project for javascript.
 fn build_js() -> Result(Nil) {
   shellout.command(
     run: "gleam",
@@ -72,6 +73,8 @@ fn build_js() -> Result(Nil) {
   |> result.map(fn(_) { Nil })
 }
 
+/// `write_config` writes configuration and glue code. The configuration just
+/// disables a few checks.
 fn write_config() {
   // parse the projects gleam.toml file
   use name <- result.try(get_project_name())
@@ -79,6 +82,7 @@ fn write_config() {
   write_deno_config()
 }
 
+/// `get_project_name` gets the project name from `gleam.toml`.
 fn get_project_name() -> Result(String) {
   read(from: "./gleam.toml")
   |> result.replace_error(snag.new("Failed to read \"gleam.toml\""))
@@ -95,6 +99,7 @@ fn get_project_name() -> Result(String) {
   |> result.flatten
 }
 
+/// `write_deno_config` writes configuration for deno.
 fn write_deno_config() {
   let deno_config =
     "{\"compilerOptions\":{\"noImplicitAny\":false,\"strict\":false}}"
@@ -106,6 +111,8 @@ fn write_deno_config() {
   ))
 }
 
+/// `write_compile_js` writes some glue code into `compile.js` that just
+/// executes the `main` function of the compiled gleam project.
 fn write_compile_js(name) {
   // write the compile.js file
   let compile_content =
@@ -117,6 +124,8 @@ fn write_compile_js(name) {
   ))
 }
 
+/// `compile_native` uses deno to compile the `compile.js` file into a native
+/// executable.
 fn compile_native(spinner) -> Result(Nil) {
   let targets =
     get_targets()
@@ -128,6 +137,7 @@ fn compile_native(spinner) -> Result(Nil) {
   }
 }
 
+/// `get_targets` gets the defined list of targets from `gleative.toml`.
 fn get_targets() -> Result(List(tom.Toml)) {
   // parse the gleative.toml file
   read(from: "./gleative.toml")
@@ -147,6 +157,7 @@ fn get_targets() -> Result(List(tom.Toml)) {
   |> result.flatten
 }
 
+/// `compile_targets` compiles `compile.js` for all given targets.
 fn compile_targets(spinner, targets) {
   case targets {
     [first, ..rest] -> {
@@ -188,6 +199,7 @@ fn compile_targets(spinner, targets) {
   }
 }
 
+/// `get_target_string` tries to convert a `tom.String` to a String.
 fn get_target_string(target) -> Result(String) {
   case target {
     tom.String(target) -> Ok(target)
@@ -195,6 +207,7 @@ fn get_target_string(target) -> Result(String) {
   }
 }
 
+/// `execute_deno` executes deno to compile `compile.js` to native code.
 fn execute_deno(target) -> Result(Nil) {
   shellout.command(
     run: "deno",
